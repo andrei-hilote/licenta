@@ -38,7 +38,7 @@ jobs:
 
     - name: Start Django Server
       run: |
-        python manage.py runserver 0.0.0.0:8000
+        python manage.py runserver 0.0.0.0:8000 &
       env:
         DJANGO_SETTINGS_MODULE: meteo_app.settings
         # Adaugă alte variabile de mediu necesare aici, de exemplu:
