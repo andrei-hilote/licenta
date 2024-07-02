@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"> <!-- Font Awesome for icons -->
+    <style>
+        body {
+            display: flex;
+            min-height: 100vh;
+            background-color: #f8f9fa;
+            margin: 0; /* Remove default margin */
+            font-family: Arial, sans-serif; /* Optional: Set a font-family */
+        }
+        .sidebar {
+            width: 240px;
+            background-color: #343a40;
+            color: #ffffff;
+            padding-top: 20px;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .logo {
+            font-size: 28px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: #c5db60;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+        .sidebar a {
+            display: block;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 20px;
+            transition: background-color 0.3s, transform 0.3s;
+            margin: 10px 0;
+            border-radius: 10px;
+            border: 2px solid transparent;
+            width: 100%;
+            text-align: center;
+            font-size: 16px;
+        }
+        .sidebar a:hover {
+            background-color: #c5db60; /* Yellow from logo */
+            color: #343a40; /* Text color */
+            transform: translateY(-5px);
+            border-color: #c5db60;
+        }
+        .chat-container {
+            margin-left: 240px; /* Adjust margin to accommodate fixed sidebar */
+            flex-grow: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch; /* Align items to full width */
+        }
+        .chat-messages {
+            flex-grow: 1; /* Take up available space */
+            overflow-y: auto; /* Enable automatic scrolling */
+            display: flex;
+            flex-direction: column; /* Display messages in normal order */
+            gap: 10px; /* Space between messages */
+            padding: 10px; /* Space around messages */
+        }
+        .chat-message {
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 10px; /* Reduce space between messages */
+        }
+        .user-message {
+            align-self: flex-end;
+            background-color: #666e53;
+            color: #ffffff;
+            border-radius: 10px;
+            max-width: 70%;
+            padding: 10px;
+            margin-left: auto;
+            word-wrap: break-word; /* Wrap long words in messages */
+        }
+        .bot-message {
+            align-self: flex-start;
+            background-color: #f0f0f0;
+            color: #333;
+            border-radius: 10px;
+            max-width: 70%;
+            padding: 10px;
+            margin-right: auto;
+            word-wrap: break-word; /* Wrap long words in messages */
+        }
+        .input-group {
+            margin-top: 20px; /* Space above input */
+            display: flex;
+            align-items: center; /* Center vertically */
+        }
+        .form-control {
+            flex-grow: 1;
+            height: 100%; /* Height equal to button */
+            border-radius: 5px 0 0 5px; /* Rounded left corners for input */
+            border-color: #343a40; /* Border color */
+            color: #343a40; /* Text color */
+            font-size: 16px; /* Text size */
+            padding: 10px; /* Text spacing */
+        }
+        .btn-send {
+            background-color: #343a40; /* Button background color */
+            color: #ffffff; /* Button text color */
+            border: none; /* No border */
+            cursor: pointer; /* Pointer cursor */
+            padding: 12px; /* Button spacing */
+            border-radius: 50%; /* Rounded button */
+            transition: background-color 0.3s, color 0.3s; /* Color transition */
+        }
+        .btn-send:hover {
+            background-color: #c5db60; /* Yellow on hover */
+            color: #343a40; /* Text color on hover */
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">Statie meteo</div>
+        <a href="/dashboard/">Home</a>
+        <a href="/dashboard/date/">Data</a>
+        <a href="/dashboard/chat/">Chat</a>
+    </div>
+    <div class="chat-container">
+        <!-- Message container -->
+        <div class="chat-messages" id="chat-messages">
+            <!-- Messages will be generated dynamically -->
+        </div>
+        <div class="input-group">
+            <input type="text" class="form-control" id="user-input" placeholder="Scrie un mesaj..." onkeydown="handleKeyPress(event)">
+            <button class="btn-send" onclick="sendMessage()"><i class="fas fa-arrow-right"></i></button>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chat-messages');
+        const userInput = document.getElementById('user-input');
+
+        function handleKeyPress(event) {
+            if (event.keyCode === 13) {
+                event.preventDefault(); // Prevent form submission if inside a <form> element
+                sendMessage();
+                userInput.value = ''; // Clear input field after sending message
+                userInput.focus(); // Focus back on the input field
+            }
+        }
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (message === '') return;
+
+            const userMessage = `<div class="chat-message user-message">${message}</div>`;
+            addMessage(userMessage);
+
+            try {
+                const response = await fetch('/api/chatbot/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message: userInput })
+                });
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+                const botMessage = `<div class="chat-message bot-message">${data.response}</div>`;
+                addMessage(botMessage);
+                // Scroll chat container to bottom after adding messages
+                scrollChatToBottom();
+            } catch (error) {
+                console.error('Error sending message:', error);
+                // Handle error display or other actions as needed
+            }
+
+            // Clear input field after sending message
+            userInput.value = '';
+            userInput.focus(); // Focus back on the input field
+            scrollChatToBottom();
+        }
+
+        function addMessage(message) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('chat-message');
+            messageElement.innerHTML = message;
+
+            chatMessages.appendChild(messageElement);
+        }
+
+        function scrollChatToBottom() {
+            chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to the bottom
+        }
+    </script>
+</body>
+</html>
