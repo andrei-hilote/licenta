@@ -178,8 +178,8 @@
 
     async function createCharts() {
         try {
-            const data = await fetchData('/api/temperatures/');
-            const recentData = await fetchData('/api/temperatures/recent/');
+            const data = await fetchData('/licenta/api/temperatures/');
+            const recentData = await fetchData('/licenta/api/temperatures/recent/');
 
             const outsideData = data.filter(entry => entry.type === 'outside');
             const insideData = data.filter(entry => entry.type === 'inside');
